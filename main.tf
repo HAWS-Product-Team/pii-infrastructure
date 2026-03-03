@@ -1,3 +1,5 @@
+# PHYSICAL FILE TEST
+
 terraform {
   required_providers {
     aws = {
@@ -10,7 +12,7 @@ terraform {
 
 
 provider "aws" {
-  region = "us-east-2"  # Change to your preferred region
+  region = "us-east-2" 
 }
 
 resource "aws_vpc" "main" {
