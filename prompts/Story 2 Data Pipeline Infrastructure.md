@@ -59,12 +59,12 @@ Create:
 - one Batch job definition
 
 Requirements for compute environment:
-- **Spot instances**
+- **Spot instances** of the following types: c8g.large, c7g.large, m7g.large
 - **CPU-only**
 - no GPU instance types
-- instance types suitable for CPU inference
+- use the following instance type: g4.medium
 - internet access from the compute instances
-- use existing VPC/subnet inputs if supplied, otherwise create the minimum networking required
+- create the minimum networking required
 - if private subnets are used, include NAT or another solution that allows outbound internet access
 
 Requirements for job queue:
@@ -77,7 +77,6 @@ Requirements for job definition:
 - configure CloudWatch Logs
 - allow passing input/output S3 URIs as environment variables or parameters
 - do not require GPU resources
-- include a sensible timeout and retry policy if convenient
 
 ---
 
@@ -97,7 +96,7 @@ Create the minimum necessary IAM roles/policies for:
 - AWS Batch service role
 - ECS/EC2 instance profile or execution role as needed
 - S3 read/write permissions for the job
-- when the job is finished, it will cleanup the input/output buckets
+- when the job is finished, the batch will delete the input/output S3 objects to keep data private
 - ECR pull permissions
 - CloudWatch Logs permissions
 
@@ -132,6 +131,7 @@ Use clear environment-based names such as:
 
 ## Implementation expectations
 - Prefer clean, readable Terraform
+- Put the data pipeline infrastructure in a separate terraform plan called `data-pipeline.tf`
 - Use variables for environment-specific values
 - Keep the design minimal and POC-appropriate
 - Do not add unnecessary services
@@ -150,7 +150,3 @@ The Terraform is correct only if:
 7. Job can read input from S3 and write output JSON to S3
 8. Logs appear in CloudWatch
 9. Terraform outputs are complete and usable
-
----
-
-Consider if the above should be in a separate terraform file.
