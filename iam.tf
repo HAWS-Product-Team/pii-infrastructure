@@ -13,11 +13,13 @@ resource "aws_iam_policy" "tf_state_access" {
         Resource = "arn:aws:s3:::pii-tf-state"
       },
       {
-        Effect = "Allow" #allows team members to read, write, and delete state lock file#
+        Effect = "Allow" 
         Action = [
           "s3:GetObject",
+          "s3:GetObjectVersion",
           "s3:PutObject",
-          "s3:DeleteObject"
+          "s3:DeleteObject",
+          "s3:DeleteObjectVersion",
         ]
         Resource = "arn:aws:s3:::pii-tf-state/*"
       }
