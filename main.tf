@@ -11,6 +11,11 @@ terraform {
 
 provider "aws" {
   region = "us-east-1"
+  alias  = "use1"
+}
+
+provider "aws" {
+  region = "us-east-1"
 }
 
 resource "aws_vpc" "main" {
@@ -36,7 +41,9 @@ resource "aws_internet_gateway" "igw" {
   
 }
 
-data "aws_availability_zones" "available" {}
+data "aws_availability_zones" "available" {
+    provider = aws.use1
+    }
 
 resource "aws_subnet" "public_a" {
     vpc_id            = aws_vpc.main.id
