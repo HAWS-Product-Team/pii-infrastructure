@@ -4,7 +4,7 @@ Infrastructure for Personal Inflation Index
 What this infrastructure uses:
 - terraform with shared state to an s3 bucket
 - AWS Amplify for continuous deployment
-- a personal access token for GitHub so Amplify can access the application repository
+- to run the terraform plan, you'll need a personal access token for GitHub so Amplify can access the application repository
 
 What this infrastructure does:
 Creates the infrastructure for the Personal Inflation Index application.  The application is in a separate repo.
