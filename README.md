@@ -60,7 +60,8 @@ aws sts get-caller-identity
 
 If that returns a different account ID or user, you'll need to either set the environment variable
 AWS_PROFILE or change your default profile in `~/.aws/config`.
-For example:
+For example, in my case, I have a profile called `pii-infrastructure` that has my access key and secret key, and it's 
+not the default profile.  So to use that profile, I run:
 ```bash
 AWS_PROFILE=pii-infrastructure aws sts get-caller-identity
 
@@ -87,9 +88,11 @@ The token for *Amplify* should have the following permissions:
   - Contents: Read-only (Amplify needs to read your source)
   - Metadata: Read-only (typically required by GitHub API access patterns)
 
-## Problem: Error: Error acquiring the state lock happens when running terraform commands. And your certain that you
+## Problem: Error: Error acquiring the state lock happens when running terraform commands. And you're certain that you
 are the only one running terraform at the moment.
-### Solution: 
+### Solution1:
+Check that you're running the command with the correct AWS_PROFILE.  If you are, move to solution2.
+### Solution2: 
 Assuming no one else is running terraform while you ran the command (including yourself as you may be running
 it in another terminal), a lock can be left behind if you
 recently crashed terraform or canceled (ctl-c) a terraform operation. 

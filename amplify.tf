@@ -1,19 +1,19 @@
 resource "aws_amplify_app" "pii_frontend" {
-  name       = "pii-frontend"
-  
+  name = "pii-frontend"
 
-  platform    = "WEB"
+
+  platform = "WEB"
 
   tags = {
-    ManagedBy  = "terraform"
-    Test       = "it-works"
+    ManagedBy = "terraform"
+    Test      = "it-works"
   }
 
   custom_rule {
-  source = "</^[^.]+$/>"
-  target = "/index.html"
-  status = "200"
-}
+    source = "</^[^.]+$/>"
+    target = "/index.html"
+    status = "200"
+  }
 
 
   build_spec = <<EOF

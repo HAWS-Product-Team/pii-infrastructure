@@ -43,7 +43,7 @@ Agent must keep Story 2 changes isolated and clearly named.
 ## Required Inputs (Terraform Variables)
 - `app_name` (string) with a default of "pii"
 - `environment` (string) with a default of "dev"
-- `aws_region` (string) with a default of "us-east-2"
+- `aws_region` (string) with a default of "us-east-1"
 
 Networking:
 - `existing_vpc_id` (string, nullable, default = null)
@@ -287,7 +287,7 @@ Outputs:
 ## Acceptance Criteria (Pass/Fail)
 1. ECR repo exists and returns usable repo URL.
 2. Input/output S3 buckets exist; IAM permissions allow required read/write (and object cleanup).
-3. CloudWatch Log Group exists with 2-day retention.
+3. CloudWatch Log Group exists with 3-day retention.
 4. Batch compute environment uses Spot CPU-only instances from approved types.
 5. Job queue is enabled and connected to compute environment.
 6. Job definition references ECR image and has CPU/memory/logging configured.

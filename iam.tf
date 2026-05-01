@@ -13,7 +13,7 @@ resource "aws_iam_policy" "tf_state_access" {
         Resource = "arn:aws:s3:::pii-tf-state"
       },
       {
-        Effect = "Allow" 
+        Effect = "Allow"
         Action = [
           "s3:GetObject",
           "s3:GetObjectVersion",
@@ -28,7 +28,7 @@ resource "aws_iam_policy" "tf_state_access" {
 }
 
 resource "aws_iam_user_policy_attachment" "tf_state_attach" {
-  for_each = toset(["oxfordgreen95", "lancerkind", "KaanIsmet", "itsmannyvo", "afoshiok"])  
+  for_each = toset(["oxfordgreen95", "lancerkind", "KaanIsmet", "itsmannyvo", "afoshiok"])
 
   user       = each.value
   policy_arn = aws_iam_policy.tf_state_access.arn
