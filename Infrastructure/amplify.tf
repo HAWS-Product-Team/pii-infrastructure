@@ -1,6 +1,7 @@
 resource "aws_amplify_app" "pii_frontend" {
-  name = "pii-frontend"
-
+  name = "${local.name_prefix}-frontend"
+  #repository   = "https://github.com/HAWS-Product-Team/pii-application"
+  #access_token = var.amplify_github_token
 
   platform = "WEB"
 
