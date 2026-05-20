@@ -34,12 +34,8 @@ output "batch_service_role_arn" {
   value = aws_iam_role.batch_service_role.arn
 }
 
-output "batch_instance_role_arn" {
-  value = aws_iam_role.batch_instance_role.arn
-}
-
-output "batch_instance_profile_arn" {
-  value = aws_iam_instance_profile.batch_instance_profile.arn
+output "batch_execution_role_arn" {
+  value = aws_iam_role.batch_execution_role.arn
 }
 
 output "batch_job_role_arn" {

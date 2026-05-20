@@ -36,4 +36,4 @@ override.tf.json
 .terraformrc
 terraform.rc
 .DS_Store
-terraform.tfvars
+Infrastructure/terraform.tfvars

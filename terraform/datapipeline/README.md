@@ -7,17 +7,17 @@ This module provisions the infrastructure required for the PII data pipeline.
 - **ECR Repository**: Stores the application container image.
 - **S3 Buckets**: Dedicated buckets for input and output data.
 - **AWS Batch**: 
-  - **Compute Environment**: Managed EC2 Spot environment using Graviton (ARM64) instances.
+  - **Compute Environment**: Managed Fargate/Fargate Spot environment.
   - **Job Queue**: Prioritized queue for batch jobs.
-  - **Job Definition**: Configured for ARM64 with logging and S3 access.
-- **IAM Roles**: Least-privilege roles for Batch service, EC2 instances, and job runtime.
+  - **Job Definition**: Configured for Fargate ARM64 with logging and S3 access.
+- **IAM Roles**: Least-privilege roles for Batch service, ECS execution, and job runtime.
 - **Networking**: Optional creation of VPC/Subnets or reuse of existing ones.
 
 ## Operations Manual
 
 ### 1. Container Image Management
 
-The pipeline runs on **ARM64 (Graviton)** instances. You must build your container image for the `linux/arm64` platform.
+The pipeline runs on **Fargate ARM64 (Graviton-equivalent)**. You must build your container image for the `linux/arm64` platform.
 
 #### Build and Push to ECR
 
@@ -68,7 +68,7 @@ aws batch submit-job \
 
 | Issue | Potential Cause | Resolution |
 |-------|-----------------|------------|
-| Job stuck in `RUNNABLE` | No compute resources available | Check if `max_vcpus` is > 0 and if the Spot market has capacity for the requested Graviton instances. |
+| Job stuck in `RUNNABLE` | No compute resources available | Check if `max_vcpus` is > 0 and if the Fargate Spot market has capacity. |
 | `Exec format error` | Wrong image architecture | Ensure the image was built for `linux/arm64`. Check build steps. |
 | `Access Denied` to S3 | IAM permissions | Verify the `INPUT_S3_URI` and `OUTPUT_S3_URI` are within the buckets created by this module. |
 | Job fails immediately | Missing env vars | Ensure `INPUT_S3_URI` and `OUTPUT_S3_URI` are passed in `container-overrides`. |
@@ -77,7 +77,11 @@ aws batch submit-job \
 ## Assumptions
 
 1. **CloudWatch Retention**: The requirement specified a 2-day retention, but AWS CloudWatch only supports specific values. 3 days was chosen as the nearest valid value (1 day was also an option, but 3 provides slightly more buffer for debugging).
-2. **Instance Types**: To ensure broad Graviton eligibility as requested, a list of families `c6g, c7g, c8g, m6g, m7g, m8g` was used. This avoids pinning to specific sizes while ensuring ARM64 architecture.
+2. **Fargate Spot**: To maximize cost savings, Fargate Spot is enabled by default (`use_fargate_spot = true`).
 3. **Egress**: The Batch security group allows all outbound traffic to ensure the job can download models from Hugging Face and interact with AWS services.
-4. **Networking**: When providing `existing_vpc_id` and `existing_subnet_ids`, it is assumed that the subnets have a path to the internet (via IGW or NAT Gateway) to satisfy the outbound internet requirement.
-5. **Job Architecture**: The job definition explicitly specifies `ARM64` architecture to match the Graviton compute environment.
+4. **Networking**: When providing `existing_vpc_id` and `existing_subnet_ids`, the module verifies that the subnets have a path to the internet (via IGW or NAT Gateway) to satisfy the outbound internet requirement.
+5. **Job Architecture**: The job definition explicitly specifies `ARM64` architecture.
+
+# Tips
+## Check Fargate Spot Availability:
+Fargate capacity is managed by AWS, but you can check service health if jobs are stuck.

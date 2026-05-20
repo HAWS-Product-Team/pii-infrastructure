@@ -1,3 +1,4 @@
+# Todo: move environment name after app name in these s3 buckets
 resource "aws_s3_bucket" "input" {
   bucket = "${var.app_name}-data-pipeline-input-${var.environment}"
 

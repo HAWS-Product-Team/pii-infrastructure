@@ -84,12 +84,12 @@ Discored reference channel.
 The token for *Amplify* should have the following permissions:
 - Repository access: you need to grant access to the repository that contains the application code. 
 - Repository permissions:
-  - Administration: Read and write (needed for webhook/deploy key management)  <-- write permission on this makes me nervous.
+  - Administration: Read and write (needed for webhook/deploy key management)
   - Contents: Read-only (Amplify needs to read your source)
   - Metadata: Read-only (typically required by GitHub API access patterns)
 
-## Problem: Error: Error acquiring the state lock happens when running terraform commands. And you're certain that you
-are the only one running terraform at the moment.
+## Problem: Error: Error acquiring the state lock happens when running terraform commands.
+And you're certain that you are the only one running terraform at the moment.
 ### Solution1:
 Check that you're running the command with the correct AWS_PROFILE.  If you are, move to solution2.
 ### Solution2: 
@@ -98,9 +98,13 @@ it in another terminal), a lock can be left behind if you
 recently crashed terraform or canceled (ctl-c) a terraform operation. 
 Here is how to clear the lock:
 ```bash
-terraform force-unlock 0146952e-ce9c-261c-67fa-3ce34a5e642f
+terraform force-unlock <insert lock ID from error message>
 ```
 As always, you'll need to have AWS_PROFILE set or have the correct default profile in your ~/.aws/config file.
 
 CAUTION: Never delete terraform.tfstate in S3 to “fix” this or you'll have clean up your infrastructure from 
 the AWS console.
+
+## Problem: Error: Error refreshing state: Unable to access object "dev/terraform.tfstate" in S3 bucket "pii-tf-state": operation error S3: HeadObject, https response error StatusCode: 403 Forbidden
+### Solution:
+Check that you're running the command with the correct AWS_PROFILE.

@@ -14,11 +14,11 @@ variable "aws_region" {
 }
 
 variable "existing_vpc_id" {
-  type    = string
+  type = string
 }
 
 variable "existing_subnet_ids" {
-  type    = list(string)
+  type = list(string)
 
   validation {
     condition = (
@@ -28,16 +28,16 @@ variable "existing_subnet_ids" {
   }
 }
 
-variable "batch_min_vcpus" {
-  description = "Minimum vCPUs for Batch compute environment"
-  type        = number
-  default     = 0
+variable "use_fargate_spot" {
+  description = "Whether to use Fargate Spot for Batch compute environment"
+  type        = bool
+  default     = true
 }
 
-variable "batch_desired_vcpus" {
-  description = "Desired vCPUs for Batch compute environment"
-  type        = number
-  default     = 0
+variable "fargate_platform_version" {
+  description = "Fargate platform version for Batch jobs"
+  type        = string
+  default     = "LATEST"
 }
 
 variable "batch_max_vcpus" {
@@ -46,52 +46,36 @@ variable "batch_max_vcpus" {
   default     = 16
 }
 
-variable "batch_allocation_strategy" {
-  description = "Allocation strategy for Batch compute environment"
-  type        = string
-  default     = "SPOT_PRICE_CAPACITY_OPTIMIZED"
-}
-
-variable "batch_instance_architecture" {
-  description = "Architecture for Batch compute environment"
-  type        = string
-  default     = "arm64"
-}
-
-variable "batch_allowed_instance_families" {
-  description = "Allowed instance families for Batch compute environment"
-  type        = list(string)
-  default     = ["c", "m"]
-}
-
-variable "batch_allowed_instance_generations" {
-  description = "Allowed instance generations for Batch compute environment"
-  type        = list(string)
-  default     = ["6g", "7g", "8g"]
-}
-
-variable "batch_min_instance_size" {
-  description = "Minimum instance size for Batch compute environment"
-  type        = string
-  default     = "large"
-}
-
-variable "batch_use_optimal_instance_classes" {
-  description = "Whether to use optimal instance classes for Batch compute environment"
-  type        = bool
-  default     = true
-}
-
 variable "job_vcpu" {
   description = "vCPUs for the Batch job"
   type        = number
   default     = 2
+
+  validation {
+    condition     = contains([2, 4, 8, 16], var.job_vcpu)
+    error_message = "job_vcpu must be one of 2, 4, 8, or 16."
+  }
 }
 
 variable "job_memory_mb" {
   description = "Memory for the Batch job"
   type        = number
   default     = 4096
+
+  validation {
+    # 2 vCPU: 4096–16384 MB in 1024 MB increments
+    # 4 vCPU: 8192–30720 MB in 1024 MB increments
+    # 8 vCPU: 16384–61440 MB in 4096 MB increments
+    # 16 vCPU: 32768–122880 MB in 8192 MB increments
+    condition = (
+      var.job_vcpu == 2 ? (var.job_memory_mb >= 4096 && var.job_memory_mb <= 16384 && var.job_memory_mb % 1024 == 0) :
+      var.job_vcpu == 4 ? (var.job_memory_mb >= 8192 && var.job_memory_mb <= 30720 && var.job_memory_mb % 1024 == 0) :
+      var.job_vcpu == 8 ? (var.job_memory_mb >= 16384 && var.job_memory_mb <= 61440 && var.job_memory_mb % 4096 == 0) :
+      var.job_vcpu == 16 ? (var.job_memory_mb >= 32768 && var.job_memory_mb <= 122880 && var.job_memory_mb % 8192 == 0) :
+      true # Allow other vCPU values if they weren't explicitly restricted by the story but we restricted them above anyway
+    )
+    error_message = "job_memory_mb is not a supported Fargate value for the chosen job_vcpu."
+  }
 }
 
 variable "job_timeout_seconds" {
