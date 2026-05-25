@@ -44,15 +44,10 @@ You can trigger a job using the AWS CLI. You need to provide the input and outpu
 
 ```bash
 aws batch submit-job \
-    --job-name pii-processing-job-$(date +%Y%m%d%H%M%S) \
-    --job-queue <JOB_QUEUE_NAME> \
-    --job-definition <JOB_DEFINITION_NAME> \
-    --container-overrides '{
-        "environment": [
-            {"name": "INPUT_S3_URI", "value": "s3://<INPUT_BUCKET>/data/input.csv"},
-            {"name": "OUTPUT_S3_URI", "value": "s3://<OUTPUT_BUCKET>/results/output.json"}
-        ]
-    }'
+  --job-name job-from-aws-cli \
+  --job-queue pii-batch-queue-dev \
+  --job-definition pii-batch-jobdef-fargate-dev \
+  --parameters input_s3_uri=s3://pii-data-pipeline-input-dev/input/123456789/synthetic_purchases_2024_evaluation_data.csv
 ```
 
 ### 3. Inputs and Outputs

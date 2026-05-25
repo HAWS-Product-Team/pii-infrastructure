@@ -76,7 +76,7 @@ resource "aws_iam_policy" "batch_job_policy" {
           "s3:DeleteObject"
         ]
         Resource = [
-          "${aws_s3_bucket.input.arn}/${var.input_key_prefix}*"
+          "${aws_s3_bucket.input.arn}/*"
         ]
       },
       {
@@ -86,7 +86,7 @@ resource "aws_iam_policy" "batch_job_policy" {
           "s3:DeleteObject"
         ]
         Resource = [
-          "${aws_s3_bucket.output.arn}/${var.output_key_prefix}*"
+          "${aws_s3_bucket.output.arn}/*"
         ]
       }
     ]
