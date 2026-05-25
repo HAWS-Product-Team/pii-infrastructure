@@ -113,9 +113,3 @@ variable "output_retention_days" {
   type        = number
   default     = 14
 }
-
-variable "model_id" {
-  description = "Model ID to download from Hugging Face"
-  type        = string
-  default     = "google/flan-t5-small" # POC default
-}

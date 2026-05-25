@@ -43,13 +43,14 @@ resource "aws_batch_job_definition" "batch_job" {
       { type = "VCPU", value = tostring(var.job_vcpu) },
       { type = "MEMORY", value = tostring(var.job_memory_mb) }
     ]
+
+    command = [
+      "Ref::input_s3_uri"
+    ]
+
     jobRoleArn       = aws_iam_role.batch_job_role.arn
     executionRoleArn = aws_iam_role.batch_execution_role.arn
-    environment = [
-      { name = "INPUT_S3_URI", value = "" },
-      { name = "OUTPUT_S3_URI", value = "" },
-      { name = "MODEL_ID", value = var.model_id }
-    ]
+
     logConfiguration = {
       logDriver = "awslogs"
       options = {
@@ -58,10 +59,12 @@ resource "aws_batch_job_definition" "batch_job" {
         awslogs-stream-prefix = "batch"
       }
     }
+
     runtimePlatform = {
       operatingSystemFamily = "LINUX"
       cpuArchitecture       = "ARM64"
     }
+
     networkConfiguration = {
       assignPublicIp = "ENABLED"
     }
