@@ -51,23 +51,25 @@ aws batch submit-job \
 ```
 
 ### 3. Inputs and Outputs
+These are passed as parameters to the command line.
 
 - **Inputs**:
-    - `INPUT_S3_URI`: Full S3 path to the file to be processed. The job role has read access to the input bucket.
+    - `input_s3_uri`: Full S3 path to the file to be processed. The job role has read access to the input bucket.
 - **Outputs**:
-    - `OUTPUT_S3_URI`: Full S3 path where results should be stored. The job role has write access to the output bucket.
+    - `output_s3_uri`: Full S3 path where results should be stored. The job role has write access to the output bucket.
 - **Logs**:
     - All container logs (stdout/stderr) are sent to CloudWatch Logs under the log group provided in the outputs.
 
-### 4. Troubleshooting
+### Troubleshooting
 
-| Issue | Potential Cause | Resolution |
-|-------|-----------------|------------|
-| Job stuck in `RUNNABLE` | No compute resources available | Check if `max_vcpus` is > 0 and if the Fargate Spot market has capacity. |
-| `Exec format error` | Wrong image architecture | Ensure the image was built for `linux/arm64`. Check build steps. |
-| `Access Denied` to S3 | IAM permissions | Verify the `INPUT_S3_URI` and `OUTPUT_S3_URI` are within the buckets created by this module. |
-| Job fails immediately | Missing env vars | Ensure `INPUT_S3_URI` and `OUTPUT_S3_URI` are passed in `container-overrides`. |
-| Cannot download model | No internet access | Ensure the subnets have a route to an IGW or NAT Gateway. |
+| Issue | Potential Cause                | Resolution                                                                                   |
+|-------|--------------------------------|----------------------------------------------------------------------------------------------|
+| Job stuck in `RUNNABLE` | No compute resources available | Check if `max_vcpus` is > 0 and if the Fargate Spot market has capacity.                     |
+| `Exec format error` | Wrong image architecture       | Ensure the image was built for `linux/arm64`. Check build steps.                             |
+| `Access Denied` to S3 | IAM permissions                | Verify the `INPUT_S3_URI` and `OUTPUT_S3_URI` are within the buckets created by this module. |
+| `Access Denied` to S3 | typo in uri                    | Verify the input and outputs are correct s3 locations.                                       |
+| Job fails immediately | Missing env vars               | Ensure `INPUT_S3_URI` and `OUTPUT_S3_URI` are passed in `container-overrides`.               |
+| Cannot download model | No internet access             | Ensure the subnets have a route to an IGW or NAT Gateway.                                    |
 
 ## Assumptions
 
