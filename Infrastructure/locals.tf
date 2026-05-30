@@ -1,3 +1,3 @@
 locals {
-  name_prefix = var.app_name
+  name_prefix = "${var.app_name}-${var.environment}"
 }

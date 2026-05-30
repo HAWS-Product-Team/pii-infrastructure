@@ -25,7 +25,7 @@ resource "aws_vpc" "main" {
 
   tags = {
     Name = "HAWS-PII-VPC"
-    Environment = "dev"
+    Environment = var.environment
     ManagedBy   = "terraform"
   }
 }
@@ -35,7 +35,7 @@ resource "aws_internet_gateway" "igw" {
     
     tags = {
         Name = "HAWS-PII-IGW"
-        Environment = "dev"
+        Environment = var.environment
         ManagedBy   = "terraform"
     }
   
@@ -53,7 +53,7 @@ resource "aws_subnet" "public_a" {
 
     tags = {
         Name = "HAWS-PII-Public-A"
-        Environment = "dev"
+        Environment = var.environment
         ManagedBy   = "terraform"
     }
 }
@@ -65,7 +65,7 @@ resource "aws_subnet" "private_a" {
 
     tags = {
         Name = "HAWS-PII-Private-A"
-        Environment = "dev"
+        Environment = var.environment
         ManagedBy   = "terraform"
     }
 }
@@ -78,7 +78,7 @@ resource "aws_subnet" "public_b" {
 
     tags = {
         Name = "HAWS-PII-Public-B"
-        Environment = "dev"
+        Environment = var.environment
         ManagedBy   = "terraform"
     }
 }
@@ -90,7 +90,7 @@ resource "aws_subnet" "private_b" {
 
     tags = {
         Name = "HAWS-PII-Private-B"
-        Environment = "dev"
+        Environment = var.environment
         ManagedBy   = "terraform"
     }
 }
@@ -100,7 +100,7 @@ resource "aws_route_table" "public_rt" {
 
     tags = {
         Name = "HAWS-PII-Public-RT"
-        Environment = "dev"
+        Environment = var.environment
         ManagedBy   = "terraform"
     }
 }
@@ -131,7 +131,7 @@ module "datapipeline" {
   existing_vpc_id = aws_vpc.main.id
 
   existing_subnet_ids = [
-    aws_subnet.public_a.id,
-    aws_subnet.public_b.id
+    aws_subnet.private_a.id,
+    aws_subnet.private_b.id
   ]
 }
