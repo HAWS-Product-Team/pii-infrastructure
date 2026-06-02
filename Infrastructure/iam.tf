@@ -1,4 +1,3 @@
-/*
 resource "aws_iam_policy" "tf_state_access" {
   name        = "tf-state-access"
   description = "Access to Terraform state bucket"
@@ -40,4 +39,3 @@ resource "aws_iam_user_policy_attachment" "tf_state_attach" {
   user       = each.value
   policy_arn = aws_iam_policy.tf_state_access.arn
 }
-*/
