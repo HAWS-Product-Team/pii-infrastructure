@@ -113,9 +113,11 @@ Check that you're running the command with the correct AWS_PROFILE.
 ### Solution: terraform init -reconfigure
 If the backend state location changed because you switched from "dev" to "prod" this error will
 happen which is normal.  Typically you want to do:
-`terraform init -migrate-state`
-and you can decide if you want update the state file to what is in AWS or use what's in the statefile. Terraform 
-will ask you which you want to do in an interactive manner.
+`terraform init -reconfigure`
+This tells Terraform to update the backend configuration to point to the new key 
+(<key>/terraform.tfstate) but does not try to move any existing state data. 
+This is correct because you are starting fresh with a new VPC/infrastructure and likely don't want to carry over (migrate)
+the state from the old <prior key>/terraform.tfstate file.
 
 ## Problem:  Error: Backend configuration changed
 Something has happened to get my local terraform unhappy with the remote state.
