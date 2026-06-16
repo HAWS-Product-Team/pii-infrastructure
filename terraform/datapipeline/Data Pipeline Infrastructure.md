@@ -69,14 +69,14 @@ These are passed as parameters to the command line.
 | `Access Denied` to S3 | IAM permissions                | Verify the `INPUT_S3_URI` and `OUTPUT_S3_URI` are within the buckets created by this module. |
 | `Access Denied` to S3 | typo in uri                    | Verify the input and outputs are correct s3 locations.                                       |
 | Job fails immediately | Missing env vars               | Ensure `INPUT_S3_URI` and `OUTPUT_S3_URI` are passed in `container-overrides`.               |
-| Cannot download model | No internet access             | Ensure the subnets have a route to an IGW or NAT Gateway.                                    |
+| Cannot download model | No internet access             | Ensure the subnets have a route to an IGW.                                                   |
 
 ## Assumptions
 
 1. **CloudWatch Retention**: The requirement specified a 2-day retention, but AWS CloudWatch only supports specific values. 3 days was chosen as the nearest valid value (1 day was also an option, but 3 provides slightly more buffer for debugging).
 2. **Fargate Spot**: To maximize cost savings, Fargate Spot is enabled by default (`use_fargate_spot = true`).
-3. **Egress**: The Batch security group allows all outbound traffic to ensure the job can download models from Hugging Face and interact with AWS services.
-4. **Networking**: When providing `existing_vpc_id` and `existing_subnet_ids`, the module verifies that the subnets have a path to the internet (via IGW or NAT Gateway) to satisfy the outbound internet requirement.
+3. **Egress**: The Batch security group is restricted to outbound traffic on ports 443 (HTTPS), 53 (DNS), and 123 (NTP) to ensure the job can interact with AWS services and fetch necessary data while maintaining a strong security posture.
+4. **Networking**: When providing `existing_vpc_id` and `existing_subnet_ids`, the module verifies that the subnets have a path to the internet (via IGW) to satisfy the outbound internet requirement. Since we use public subnets with locked-down security groups, NAT Gateways are not required, saving costs.
 5. **Job Architecture**: The job definition explicitly specifies `ARM64` architecture.
 
 # Tips

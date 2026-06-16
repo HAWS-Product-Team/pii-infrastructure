@@ -58,17 +58,6 @@ resource "aws_subnet" "public_a" {
     }
 }
 
-resource "aws_subnet" "private_a" {
-    vpc_id = aws_vpc.main.id
-    cidr_block = "10.0.11.0/24"
-    availability_zone = data.aws_availability_zones.available.names[0]
-
-    tags = {
-        Name = "HAWS-PII-Private-A"
-        Environment = var.environment
-        ManagedBy   = "terraform"
-    }
-}
 
 resource "aws_subnet" "public_b" {
     vpc_id            = aws_vpc.main.id
@@ -83,17 +72,6 @@ resource "aws_subnet" "public_b" {
     }
 }
 
-resource "aws_subnet" "private_b" {
-    vpc_id = aws_vpc.main.id
-    cidr_block = "10.0.12.0/24"
-    availability_zone = data.aws_availability_zones.available.names[1]
-
-    tags = {
-        Name = "HAWS-PII-Private-B"
-        Environment = var.environment
-        ManagedBy   = "terraform"
-    }
-}
 
 resource "aws_route_table" "public_rt" {
     vpc_id = aws_vpc.main.id
@@ -115,20 +93,6 @@ resource "aws_route_table_association" "public_b"{
     route_table_id = aws_route_table.public_rt.id
 }
 
-resource "aws_route_table" "private_rt" {
-  vpc_id = aws_vpc.main.id
-}
-
-
-resource "aws_route_table_association" "private_a" {
-  subnet_id      = aws_subnet.private_a.id
-  route_table_id = aws_route_table.private_rt.id
-}
-
-resource "aws_route_table_association" "private_b" {
-  subnet_id      = aws_subnet.private_b.id
-  route_table_id = aws_route_table.private_rt.id
-}
 
 resource "aws_route" "public_igw" {
     route_table_id = aws_route_table.public_rt.id
@@ -146,14 +110,8 @@ module "datapipeline" {
   existing_vpc_id = aws_vpc.main.id
 
   existing_subnet_ids = [
-    aws_subnet.private_a.id,
-    aws_subnet.private_b.id
+    aws_subnet.public_a.id,
+    aws_subnet.public_b.id
   ]
-
-  depends_on = [
-  aws_route_table_association.private_a,
-  aws_route_table_association.private_b,
-
-]
 }
 

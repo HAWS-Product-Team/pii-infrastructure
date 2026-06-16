@@ -135,7 +135,7 @@ This occurred when doing a:
 terraform import aws_iam_policy.tf_state_access tf-state-access
 ### Solution: AWS requires an ARN when referring to IAM policies, not just the short name 'tf-state-access'
 The error Member must have length greater than or equal to 20 indicates that Terraform is trying to use the short name tf-state-access as the ARN, but AWS requires the full ARN for IAM policies.
-This is the format: arn:aws:iam::<ACCOUNT_ID>:policy/<POLICY_NAME>
+This is the format: `arn:aws:iam::<ACCOUNT_ID>:policy/<POLICY_NAME>`
 you can find it in your AWS Console URL, or by running:
 `aws sts get-caller-identity --query Account --output text`
 Then the format of the command is:
@@ -159,9 +159,21 @@ The error you're seeing is a classic symptom of a provider version mismatch or c
 3. There's a mismatch between the provider version expected by the state and the one installed
 
 ### Solution: clean up the corrupted provider cache
-# Remove the corrupted provider cache
+Remove the corrupted provider cache:
 `rm -rf .terraform/providers`
 
-# Re-initialize with the correct providers
+Re-initialize with the correct providers:
 `terraform init -reconfigure`
 The -reconfigure flag forces Terraform to re-download and re-verify all providers.
+
+## Problem: Error: Resource already managed by Terraform
+In this case, I'm trying to import a resource that is already managed by Terraform. This can happen if you're 
+trying to import a resource that was created outside of Terraform or if you're trying to import a resource that was 
+created by a different Terraform configuration.
+
+### Solution: Use the correct import ID
+Make sure you're using the correct import ID for the resource you're trying to import. You can find the correct import 
+ID in the summary of import IDs above.
+`terraform state rm <state object>`
+Example:
+`terraform state rm module.datapipeline.aws_security_group.batch_sg`

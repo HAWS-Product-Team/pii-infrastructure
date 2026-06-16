@@ -66,12 +66,7 @@ locals {
   subnet_ids = var.existing_subnet_ids != null ? var.existing_subnet_ids : aws_subnet.public[*].id
 }
 
-data "aws_route_table" "selected" {
-  count     = var.existing_subnet_ids != null ? length(var.existing_subnet_ids) : 0
-  subnet_id = var.existing_subnet_ids[count.index]
-}
-
-# Precondition to ensure all existing subnets have a route to 0.0.0.0/0 via IGW or NAT Gateway
+# Precondition to ensure all existing subnets have a route to 0.0.0.0/0 via IGW
 # resource "null_resource" "check_egress" {
 #   count = var.existing_subnet_ids != null ? length(var.existing_subnet_ids) : 0
 #
@@ -80,26 +75,57 @@ data "aws_route_table" "selected" {
 #       condition = anytrue([
 #         for r in data.aws_route_table.selected[count.index].routes : (
 #           r.cidr_block == "0.0.0.0/0" && (
-#             (r.gateway_id != null && r.gateway_id != "" && can(regex("^igw-", r.gateway_id))) ||
-#             (r.nat_gateway_id != null && r.nat_gateway_id != "")
+#             (r.gateway_id != null && r.gateway_id != "" && can(regex("^igw-", r.gateway_id)))
 #           )
 #         )
 #       ])
-#       error_message = "Subnet ${var.existing_subnet_ids[count.index]} does not have a valid outbound route (0.0.0.0/0) via IGW or NAT Gateway."
+#       error_message = "Subnet ${var.existing_subnet_ids[count.index]} does not have a valid outbound route (0.0.0.0/0) via IGW."
 #     }
 #   }
 # }
 
 resource "aws_security_group" "batch_sg" {
-  name        = "${var.app_name}-batch-sg-${var.environment}"
-  description = "Security group for Batch compute environment"
+  # name_prefix allows terraform to gracefully handle security groups without
+  # getting fussy about deleting and replacing (super picky about name). Instead it will do an update
+  # since the namePrefix matches.
+  name_prefix        = "${var.app_name}-batch-sg-${var.environment}-"
+  description = "Security group for Batch compute environment - No inbound allowed"
   vpc_id      = local.vpc_id
 
+  # Inbound rules removed to ensure no inbound access from the internet.
+  # The pipeline is protected by this security group even in a public subnet.
+
+  # Egress rules allow outbound HTTPS and required AWS service access
   egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+    description = "HTTPS for ECR, S3, SQS, CloudWatch"
+  }
+
+  egress {
+    from_port   = 53
+    to_port     = 53
+    protocol    = "udp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "DNS"
+  }
+
+  egress {
+    from_port   = 53
+    to_port     = 53
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "DNS"
+  }
+
+  egress {
+    from_port   = 123
+    to_port     = 123
+    protocol    = "udp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "NTP"
   }
 
   tags = {

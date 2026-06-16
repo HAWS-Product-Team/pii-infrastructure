@@ -18,7 +18,8 @@ variable "existing_vpc_id" {
 }
 
 variable "existing_subnet_ids" {
-  type = list(string)
+  description = "IDs of existing public subnets with internet connectivity via IGW"
+  type        = list(string)
 
   validation {
     condition = (
