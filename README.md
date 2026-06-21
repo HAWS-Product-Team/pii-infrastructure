@@ -179,3 +179,41 @@ ID in the summary of import IDs above.
 `terraform state rm <state object>`
 Example:
 `terraform state rm module.datapipeline.aws_security_group.batch_sg`
+
+## Problem: Error: Module not installed
+Tried to run terraform but got the above error.
+
+### Solution: Run terraform init
+When a new type of resource is added to a terraform plan and it requires a provider that's not installed, you need to 
+run `terraform init` to install the required providers.
+```bash
+Infrastructure git:(main) ✗ AWS_PROFILE=pii-infrastructure terraform plan
+╷
+│ Error: Module not installed
+│
+│   on main.tf line 103:
+│  103: module "api_gateway" {
+│
+│ This module is not yet installed. Run "terraform init" to install all modules required by this configuration.
+```
+Run terraform init to install the required providers.  Notice part about `initializing modules... and api_gateway` and 
+then `initializing provider plugins`.
+```bash  Infrastructure git:(main) ✗ AWS_PROFILE=pii-infrastructure terraform init
+Initializing modules...
+- api_gateway in modules/api-gateway
+- api_gateway.api_mocks in modules/api-mocks
+Initializing provider plugins found in the configuration...
+- Reusing previous version of hashicorp/aws from the dependency lock file
+- Using previously-installed hashicorp/aws v5.100.0
+
+Initializing the backend...
+
+Initializing provider plugins found in the state...
+- Reusing previous version of hashicorp/aws
+- Using previously-installed hashicorp/aws v5.100.0
+
+
+Terraform has been successfully initialized!
+
+You may now begin working with Terraform. 
+```

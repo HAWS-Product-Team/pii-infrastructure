@@ -3,8 +3,8 @@
 
 terraform {
   backend "s3" {
-    bucket       = "pii-tf-state"
-//    key          = "prod/terraform.tfstate"
+    bucket = "pii-tf-state"
+    //    key          = "prod/terraform.tfstate"
     key          = "dev/terraform.tfstate"
     region       = "us-east-1"
     encrypt      = true
