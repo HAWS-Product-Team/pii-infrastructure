@@ -27,13 +27,11 @@ resource "aws_iam_policy" "tf_state_access" {
   })
 }
 
+# access to terraform shared state
 resource "aws_iam_user_policy_attachment" "tf_state_attach" {
   for_each = toset([
     "oxfordgreen95",
-    "lancerkind",
-    "KaanIsmet",
-    "itsmannyvo",
-    "afoshiok"
+    "lancerkind"
   ])
 
   user       = each.value

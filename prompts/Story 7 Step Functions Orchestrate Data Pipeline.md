@@ -13,10 +13,10 @@ stage runs in Lambda after classification completes.
 The data pipeline is moving to a staged batch pipeline architecture using S3 artifacts between stages.
 
 The current pipeline elements are:
-```text Classifier PIICalculation```
+```Classifier PIICalculation```
 
 The intended execution flow is:
-```text Classifier -> PIICalculation``` 
+```Classifier -> PIICalculation``` 
 
 The classifier is a long-running inference workload and already has an ECR container image available and is 
 using AWS Batch. The PIICalculation workload is short-running, typically completing in seconds, 
@@ -34,8 +34,9 @@ anonymized.csv.
 As each user is associated with a ticket number, the ticket number will stay the same for each operation of the pipeline.
 
 s3.tf refers to these buckets as the following:
-- <input-bucket> = "${var.app_name}-data-pipeline-input-${var.environment}"
-- <output-bucket> = "${var.app_name}-data-pipeline-output-${var.environment}"
+- `<input-bucket>` = "${var.app_name}-data-pipeline-input-${var.environment}"
+- `<output-bucket>` = "${var.app_name}-data-pipeline-output-${var.environment}"
+This will be the standard for input and output file creation for all step functions.
 
 ## Target Architecture
 
@@ -43,7 +44,7 @@ s3.tf refers to these buckets as the following:
 Step Functions State Machine | 
 v s3://<input-bucket>/<ticket number>/anonymized.csv |
 v Task 1: Submit Classifier AWS Batch Job | 
-v s3://<input-bucket>/<ticket-number>classified.csv | 
+v s3://<input-bucket>/<ticket-number>/classified.csv | 
 v Task 2: Invoke PIICalculation Lambda | 
 v s3://<output-bucket>/<ticket-number>/pii-report.json
 ```
@@ -52,7 +53,7 @@ v s3://<output-bucket>/<ticket-number>/pii-report.json
 
 The Step Functions execution should accept an input payload similar to:
 ```json 
-{ "ticketnumber": "123456789", "inputCsv": "s3://pii-data-pipeline-input-dev/123456789/anonymized.csv", 
+{ "inputCsv": "s3://pii-data-pipeline-input-dev/123456789/anonymized.csv", 
   "classifiedCsv": "s3://pii-data-pipeline-input-dev/123456789/classified.csv", 
   "piiReportJson": "s3://pii-data-pipeline-output-dev/123456789/pii-report.json" }
 ``` 
@@ -81,11 +82,10 @@ The classifier AWS Batch job should receive input/output arguments equivalent to
 ```bash 
 inflation-classifier
 --input-s3-uri s3://pii-data-pipeline-input-dev/123456789/anonymized.csv
---output-s3-uri s3://pii-data-pipeline-input-dev/123456789/classified/classified.csv
+--output-s3-uri s3://pii-data-pipeline-input-dev/123456789/classified.csv
 ``` 
 
-If the current classifier CLI does not yet support these exact flags, the infrastructure should still 
-be designed around this target contract and use the current compatible command until the application contract is updated.
+The classifier AWS Batch job definition will be updated to support these flags.
 
 ## State 2: `CalculatePII`
 
@@ -107,16 +107,16 @@ be called pii-report.json
 
 The PIICalculation Lambda should receive an event similar to:
 ```json 
-{ "ticket": "123456789", "input-s3-uri": "s3://pii-work/jobs/123456789/classified/classified.csv", 
-  "output-s3-uri": "s3://pii-output/jobs/123456789/pii-report.json",
+{ "ticket": "123456789", "input-s3-uri": "s3://pii-data-pipeline-input-dev/123456789/classified.csv", 
+  "output-s3-uri": "s3://pii-data-pipeline-output-dev/123456789/pii-report.json"
 }
 ```
 
 The Lambda response should include enough information for Step Functions observability, for example:
 ```json 
-{ "ticket": "123456789", "status": "SUCCEEDED", "input-s3-uri": "s3://pii-work/jobs/123456789/classified/classified.csv", 
-  "output-s3-uri": "s3://pii-output/jobs/123456789/pii-report.json" }
-``` 
+{ "ticket": "123456789", "status": "SUCCEEDED", "input-s3-uri": "s3://pii-data-pipeline-input-dev/123456789/classified.csv", 
+  "output-s3-uri": "s3://pii-data-pipeline-output-dev/123456789/pii-report.json" }
+```
 
 ## Infrastructure Scope
 
@@ -138,8 +138,7 @@ Update the Terraform module datapipeline to include:
 - CloudWatch log group for the PIICalculation Lambda.
 - CloudWatch logging for Step Functions executions.
 - Environment-specific variables for:
-  - input bucket
-  - work/intermediate bucket
+  - input bucket (also used for intermediate artifacts)
   - output bucket
   - classifier AWS Batch job definition
   - classifier AWS Batch job queue
@@ -281,4 +280,13 @@ The infrastructure should provide:
 - EventBridge or S3-triggered automatic execution, unless already part of the existing infrastructure approach.
 - Moving the classifier from AWS Batch to Lambda.
 
-The application repository should provide the PIICalculation Lambda handler and package artifact required by this infrastructure.
+The application repository provides the PIICalculation Lambda handler and package artifact, which is located in the input S3 bucket at `/lambdas/pii-calculator.zip`.
+
+## Clarifications and Decisions
+
+- **Lambda Artifact Location:** The PIICalculation Lambda uses the package located at `s3://<input-bucket>/lambdas/pii-calculator.zip`.
+- **Classified CSV Path:** The definitive path is `s3://<input-bucket>/<ticket-number>/classified.csv`.
+- **Intermediate Storage:** The `input-bucket` is used for all intermediate pipeline artifacts.
+- **Batch CLI:** The Batch Job Definition is updated to explicitly use `--input-s3-uri` and `--output-s3-uri`.
+- **Lambda Networking:** The PIICalculation Lambda runs in the default Lambda service network (not VPC-attached).
+- **Logging:** Step Functions uses the standard CloudWatch logging convention (`/aws/vendedlogs/states/...`).

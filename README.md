@@ -68,6 +68,9 @@ AWS_PROFILE=pii-infrastructure aws sts get-caller-identity
 AWS_PROFILE=pii-infrastructure terraform plan
 ```
 
+# Executing terraform
+Run the commands from the `Infrastructure` directory as that's where the "main" terraform files are located.
+
 # Troubleshooting
 ## Problem: Access denied when running a terraform command.
 If you haven't before ran setup_account_profile.sh, run it to setup your local environment so that:
@@ -144,6 +147,13 @@ Then the format of the command is:
 `terraform import aws_iam_policy.tf_state_access arn:aws:iam::226778503410:policy/tf-state-access`
 #### General Rule for IAM Imports
 For IAM Roles and IAM Policies, you almost always need to use the full ARN for the import ID, not just the name.
+
+## Problem: Error: validating provider credentials: retrieving caller identity from STS: operation error STS: GetCallerIdentity, https response error StatusCode: 403
+The above happened when running terraform.
+### Solution: Check if you token has expired by running: `AWS_PROFILE=pii-infrastructure aws sts get-caller-identity`
+#### Option 1: 
+#### Option 2: (temporary for a few hours) If expired, run `aws sts get-session-token` and then `export AWS_ACCESS_KEY_ID=<your_access_key>` and `export AWS_SECRET_ACCESS_KEY=<your_secret_key>`
+
 
 #### Summary of Import IDs
 - IAM Policy: Use the ARN (arn:aws:iam::...:policy/...)
