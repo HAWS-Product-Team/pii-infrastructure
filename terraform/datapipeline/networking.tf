@@ -88,7 +88,7 @@ resource "aws_security_group" "batch_sg" {
   # name_prefix allows terraform to gracefully handle security groups without
   # getting fussy about deleting and replacing (super picky about name). Instead it will do an update
   # since the namePrefix matches.
-  name_prefix        = "${var.app_name}-batch-sg-${var.environment}-"
+  name_prefix = "${var.app_name}-batch-sg-${var.environment}-"
   description = "Security group for Batch compute environment - No inbound allowed"
   vpc_id      = local.vpc_id
 

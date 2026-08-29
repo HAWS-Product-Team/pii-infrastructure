@@ -8,7 +8,7 @@ variable "environment" {
   description = "Environment name"
 }
 
-variable sqs_queue_arn {
-  type = string
+variable "sqs_queue_arn" {
+  type        = string
   description = "ARN to queue"
 }

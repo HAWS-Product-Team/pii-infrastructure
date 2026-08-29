@@ -114,3 +114,45 @@ variable "output_retention_days" {
   type        = number
   default     = 14
 }
+
+variable "pii_calculator_lambda_s3_key" {
+  description = "S3 key for the PIICalculator Lambda deployment package in the input bucket"
+  type        = string
+  default     = "lambdas/pii-calculator.zip"
+}
+
+variable "pii_calculator_lambda_runtime" {
+  description = "Runtime for the PIICalculator Lambda function"
+  type        = string
+  default     = "python3.12"
+}
+
+variable "pii_calculator_lambda_handler" {
+  description = "Handler for the PIICalculator Lambda function"
+  type        = string
+  default     = "piicalculator.lambda_handler.handler"
+}
+
+variable "pii_calculator_lambda_memory_size" {
+  description = "Memory size (MB) for the PIICalculator Lambda function"
+  type        = number
+  default     = 256
+}
+
+variable "pii_calculator_lambda_timeout_seconds" {
+  description = "Timeout (seconds) for the PIICalculator Lambda function"
+  type        = number
+  default     = 300
+}
+
+variable "lambda_log_retention_days" {
+  description = "CloudWatch log retention in days for PIICalculator Lambda"
+  type        = number
+  default     = 3
+}
+
+variable "step_functions_log_retention_days" {
+  description = "CloudWatch log retention in days for Step Functions State Machine"
+  type        = number
+  default     = 3
+}

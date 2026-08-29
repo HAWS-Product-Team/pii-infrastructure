@@ -52,20 +52,25 @@ v s3://<output-bucket>/<ticket-number>/pii-report.json
 ## Proposed Workflow Input
 
 The Step Functions execution should accept an input payload similar to:
-```json 
-{ "inputCsv": "s3://pii-data-pipeline-input-dev/123456789/anonymized.csv", 
-  "classifiedCsv": "s3://pii-data-pipeline-input-dev/123456789/classified.csv", 
-  "piiReportJson": "s3://pii-data-pipeline-output-dev/123456789/pii-report.json" }
-``` 
+```json
+{
+  "ticket": "123456789",
+  "inputCsv": "s3://pii-data-pipeline-input-dev/123456789/anonymized.csv",
+  "classifiedCsv": "s3://pii-data-pipeline-input-dev/123456789/classified.csv",
+  "piiReportJson": "s3://pii-data-pipeline-output-dev/123456789/pii-report.json"
+}
+```
 
 ## Step Functions State Machine Behavior
 
 The state machine should contain two primary task states:
-```text ClassifyCsv -> CalculatePII -> Success```
+```text
+Classify -> CalculatePII -> Success
+```
 
-## State 1: `ClassifyCsv`
+## State 1: `Classify`
 
-`ClassifyCsv` submits the existing classifier AWS Batch job.
+`Classify` submits the existing classifier AWS Batch job.
 
 ### Inputs
 ```jobId inputCsv classifiedCsv``` 
@@ -284,9 +289,13 @@ The application repository provides the PIICalculation Lambda handler and packag
 
 ## Clarifications and Decisions
 
+- **State Naming:** The first state is named `Classify` (aligning with observability requirements and acceptance criteria).
 - **Lambda Artifact Location:** The PIICalculation Lambda uses the package located at `s3://<input-bucket>/lambdas/pii-calculator.zip`.
+- **Lambda Runtime and Handler:** `python3.12` runtime with handler `lambda_function.lambda_handler` (configurable via variables).
 - **Classified CSV Path:** The definitive path is `s3://<input-bucket>/<ticket-number>/classified.csv`.
 - **Intermediate Storage:** The `input-bucket` is used for all intermediate pipeline artifacts.
+- **Workflow Input Structure:** Explicit `ticket` field in the execution input JSON along with `inputCsv`, `classifiedCsv`, and `piiReportJson`.
 - **Batch CLI:** The Batch Job Definition is updated to explicitly use `--input-s3-uri` and `--output-s3-uri`.
+- **Batch Job Name:** Dynamic JobName format `States.Format("classify-{}", $.ticket)`.
 - **Lambda Networking:** The PIICalculation Lambda runs in the default Lambda service network (not VPC-attached).
-- **Logging:** Step Functions uses the standard CloudWatch logging convention (`/aws/vendedlogs/states/...`).
+- **Logging:** Step Functions uses standard CloudWatch logging (`/aws/vendedlogs/states/...`) with logging level `ALL` and execution data included.

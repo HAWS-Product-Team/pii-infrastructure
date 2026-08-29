@@ -44,8 +44,11 @@ resource "aws_batch_job_definition" "batch_job" {
       { type = "MEMORY", value = tostring(var.job_memory_mb) }
     ]
 
+    # Since command doesn't include the command name, if commend in the container entrypoint were ever to not
+    # exist, the container would execute input_s3_uri as a command. Security hinges on that entrypoint.
     command = [
-      "Ref::input_s3_uri"
+      "Ref::input_s3_uri",
+      "Ref::output_s3_uri"
     ]
 
     jobRoleArn       = aws_iam_role.batch_job_role.arn

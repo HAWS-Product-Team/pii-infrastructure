@@ -45,3 +45,35 @@ output "batch_job_role_arn" {
 output "batch_security_group_id" {
   value = aws_security_group.batch_sg.id
 }
+
+output "state_machine_arn" {
+  value = aws_sfn_state_machine.data_pipeline.arn
+}
+
+output "state_machine_name" {
+  value = aws_sfn_state_machine.data_pipeline.name
+}
+
+output "step_functions_role_arn" {
+  value = aws_iam_role.step_functions_role.arn
+}
+
+output "step_functions_log_group_name" {
+  value = aws_cloudwatch_log_group.step_functions.name
+}
+
+output "pii_calculator_lambda_arn" {
+  value = aws_lambda_function.pii_calculator.arn
+}
+
+output "pii_calculator_lambda_name" {
+  value = aws_lambda_function.pii_calculator.function_name
+}
+
+output "pii_calculator_lambda_role_arn" {
+  value = aws_iam_role.pii_calculator_lambda_role.arn
+}
+
+output "pii_calculator_log_group_name" {
+  value = aws_cloudwatch_log_group.pii_calculator_lambda.name
+}

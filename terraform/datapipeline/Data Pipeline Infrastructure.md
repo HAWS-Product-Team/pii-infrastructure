@@ -1,15 +1,17 @@
 # Data Pipeline Infrastructure
 
-This module provisions the infrastructure required for the PII data pipeline.
+This module provisions the infrastructure required for the PII data pipeline. AWS Step Functions is used to operate the stages of the pipeline: Classifier (via AWS Batch) and PII-Calculator (via AWS Lambda).
 
 ## Components
 
 - **ECR Repository**: Stores the application container image.
 - **S3 Buckets**: Dedicated buckets for input and output data.
-- **AWS Batch**: 
-  - **Compute Environment**: Managed Fargate/Fargate Spot environment.
-  - **Job Queue**: Prioritized queue for batch jobs.
-  - **Job Definition**: Configured for Fargate ARM64 with logging and S3 access.
+- **AWS Step Functions**: Orchestrates and operates the stages of the pipeline: Classifier (via AWS Batch) and PII-Calculator (via AWS Lambda).
+  - **AWS Batch**: 
+    - **Compute Environment**: Managed Fargate/Fargate Spot environment.
+    - **Job Queue**: Prioritized queue for batch jobs.
+    - **Job Definition**: Configured for Fargate ARM64 with logging and S3 access.
+  - **AWS Lambda**: Runs the PII-Calculator stage of the pipeline.
 - **IAM Roles**: Least-privilege roles for Batch service, ECS execution, and job runtime.
 - **Networking**: Optional creation of VPC/Subnets or reuse of existing ones.
 
@@ -38,7 +40,7 @@ docker push <REPO_URL>:latest
 
 ### 2. Triggering a Batch Job
 
-You can trigger a job using the AWS CLI. You need to provide the input and output S3 URIs as environment variable overrides.
+You can trigger a job using the AWS CLI. You need to provide the input and output S3 URIs as job parameters, which are passed as positional command-line arguments to the container entrypoint.
 
 #### Command Template
 
@@ -47,16 +49,14 @@ aws batch submit-job \
   --job-name job-from-aws-cli \
   --job-queue pii-batch-queue-dev \
   --job-definition pii-batch-jobdef-fargate-dev \
-  --parameters input_s3_uri=s3://pii-data-pipeline-input-dev/input/123456789/synthetic_purchases_2024_evaluation_data.csv
+  --parameters input_s3_uri=s3://pii-data-pipeline-input-dev/123456789/anonymized.csv,output_s3_uri=s3://pii-data-pipeline-input-dev/123456789/classified.csv
 ```
 
 ### 3. Inputs and Outputs
-These are passed as parameters to the command line.
+These are passed as parameters that substitute into the container command line as positional arguments:
 
-- **Inputs**:
-    - `input_s3_uri`: Full S3 path to the file to be processed. The job role has read access to the input bucket.
-- **Outputs**:
-    - `output_s3_uri`: Full S3 path where results should be stored. The job role has write access to the output bucket.
+- **1st Positional Argument (`input_s3_uri`)**: Full S3 path to the input CSV file to be processed. The job role has read access to the input bucket.
+- **2nd Positional Argument (`output_s3_uri`)**: Full S3 path where the classified CSV results should be stored. The job role has write access to the intermediate/input bucket.
 - **Logs**:
     - All container logs (stdout/stderr) are sent to CloudWatch Logs under the log group provided in the outputs.
 
@@ -66,10 +66,32 @@ These are passed as parameters to the command line.
 |-------|--------------------------------|----------------------------------------------------------------------------------------------|
 | Job stuck in `RUNNABLE` | No compute resources available | Check if `max_vcpus` is > 0 and if the Fargate Spot market has capacity.                     |
 | `Exec format error` | Wrong image architecture       | Ensure the image was built for `linux/arm64`. Check build steps.                             |
-| `Access Denied` to S3 | IAM permissions                | Verify the `INPUT_S3_URI` and `OUTPUT_S3_URI` are within the buckets created by this module. |
+| `Access Denied` to S3 | IAM permissions                | Verify the `input_s3_uri` and `output_s3_uri` are within the buckets created by this module. |
 | `Access Denied` to S3 | typo in uri                    | Verify the input and outputs are correct s3 locations.                                       |
-| Job fails immediately | Missing env vars               | Ensure `INPUT_S3_URI` and `OUTPUT_S3_URI` are passed in `container-overrides`.               |
+| Job fails immediately | Missing parameters             | Ensure `input_s3_uri` and `output_s3_uri` are passed as parameters (`--parameters input_s3_uri=...,output_s3_uri=...`) to provide the required positional arguments. |
 | Cannot download model | No internet access             | Ensure the subnets have a route to an IGW.                                                   |
+
+#### Lambda functions
+When system testing at the lambda function level, these problems may occur.
+
+##### Problem: getting a `Runtime.ImportModuleError: Unable to import module 'lambda_function': No module named 'lambda_function'`
+###### Solution: Ensure the lambda function is configured to use the correct runtime and handler. In this case
+the handler should be `piicalculator.lambda_handler.handler` set in the terraform plan for `resource "aws_lambda_function"`
+
+##### Problem: getting a `PIICalculation failed: Error reading CSV: Forbidden`
+INFO]	2026-08-25T02:35:25.517Z	5fafd2b4-c97c-4d79-91e7-eccc15a22ef5	Received event: {'ticket': '123456789', 'input-s3-uri': 's3://pii-data-pipeline-input-dev/123456789/classified.csv', 'output-s3-uri': 's3://pii-data-pipeline-output-dev/123456789/pii-report.json'}
+Reading CSV from: s3://pii-data-pipeline-input-dev/123456789/classified.csv
+[INFO]	2026-08-25T02:35:33.563Z	5fafd2b4-c97c-4d79-91e7-eccc15a22ef5	Found credentials in environment variables.
+[ERROR]	2026-08-25T02:35:35.602Z	5fafd2b4-c97c-4d79-91e7-eccc15a22ef5	PIICalculation failed: Error reading CSV: Forbidden
+[ERROR] PIICalculatorError: Error reading CSV: Forbidden
+Traceback (most recent call last):
+File "/var/task/piicalculator/lambda_handler.py", line 56, in handler
+pii_calculator(input_uri, output_uri)
+File "/var/task/piicalculator/calculator.py", line 41, in pii_calculator
+raise PIICalculatorError(f"Error reading CSV: {e}")
+###### Solution: The input file was missing from the S3 bucket. Using aws cli ensure the file is there or put a file 
+in place for testing.
+
 
 ## Assumptions
 
