@@ -115,6 +115,44 @@ variable "output_retention_days" {
   default     = 14
 }
 
+variable "normalizer_lambda_s3_key" {
+  description = "S3 key for the Normalizer Lambda deployment package in the input bucket"
+  type        = string
+  default     = "lambdas/normalizer.zip"
+}
+
+variable "normalizer_lambda_runtime" {
+  description = "Runtime for the Normalizer Lambda function"
+  type        = string
+  default     = "python3.12"
+}
+
+variable "normalizer_lambda_handler" {
+  description = "Handler for the Normalizer Lambda function"
+  type        = string
+  default     = "pdf2csv.lambda_handler.handler"
+}
+
+# A good default for native PDF text extraction with pypdf, S3 read/write, and a 32 MB max PDF input size.
+#If the Lambda will process multiple PDFs per invocation from an S3 prefix, I’d use:
+#| Workload                             | Memory    | Timeout
+#| Small uploads, 1–5 PDFs (around 1MB) | 1024 MB   | 60 sec
+#| Typical batch, 5–25 PDFs             | 1536 MB   | 2–3 min
+#| Larger batch, many PDFs near 32 MB   | 2048 MB   | 5 min
+
+variable "normalizer_lambda_memory_size" {
+  description = "Memory size (MB) for the Normalizer Lambda function"
+  type        = number
+  default     = 1536
+}
+
+# timeout = 3 min * 60s
+variable "normalizer_lambda_timeout_seconds" {
+  description = "Timeout (seconds) for the Normalizer Lambda function"
+  type        = number
+  default     = 180
+}
+
 variable "pii_calculator_lambda_s3_key" {
   description = "S3 key for the PIICalculator Lambda deployment package in the input bucket"
   type        = string

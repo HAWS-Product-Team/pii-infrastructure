@@ -1,25 +1,29 @@
 # Data Pipeline Infrastructure
 
-This module provisions the infrastructure required for the PII data pipeline. AWS Step Functions is used to operate the stages of the pipeline: Classifier (via AWS Batch) and PII-Calculator (via AWS Lambda).
+This module provisions the infrastructure required for the PII data pipeline. AWS Step Functions is used to operate 
+the stages of the pipeline: Normalizer (via AWS Lambda), Classifier (via AWS Batch), and PII-Calculator (via AWS Lambda).
 
 ## Components
 
 - **ECR Repository**: Stores the application container image.
 - **S3 Buckets**: Dedicated buckets for input and output data.
-- **AWS Step Functions**: Orchestrates and operates the stages of the pipeline: Classifier (via AWS Batch) and PII-Calculator (via AWS Lambda).
+- **AWS Step Functions**: Orchestrates and operates the stages of the pipeline: Normalizer (via AWS Lambda), 
+Classifier (via AWS Batch), and PII-Calculator (via AWS Lambda).
+  - **AWS Lambda (Normalizer)**: Runs the Normalizer stage to parse and convert uploaded PDFs to CSVs.
   - **AWS Batch**: 
     - **Compute Environment**: Managed Fargate/Fargate Spot environment.
     - **Job Queue**: Prioritized queue for batch jobs.
     - **Job Definition**: Configured for Fargate ARM64 with logging and S3 access.
-  - **AWS Lambda**: Runs the PII-Calculator stage of the pipeline.
-- **IAM Roles**: Least-privilege roles for Batch service, ECS execution, and job runtime.
+  - **AWS Lambda (PII-Calculator)**: Runs the PII-Calculator stage of the pipeline.
+- **IAM Roles**: Least-privilege roles for Batch service, ECS execution, Lambda functions, and Step Functions runtime.
 - **Networking**: Optional creation of VPC/Subnets or reuse of existing ones.
 
 ## Operations Manual
 
 ### 1. Container Image Management
 
-The pipeline runs on **Fargate ARM64 (Graviton-equivalent)**. You must build your container image for the `linux/arm64` platform.
+The pipeline runs on **Fargate ARM64 (Graviton-equivalent)**. You must build your container image for the 
+`linux/arm64` platform.
 
 #### Build and Push to ECR
 

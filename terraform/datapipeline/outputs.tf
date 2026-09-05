@@ -62,6 +62,22 @@ output "step_functions_log_group_name" {
   value = aws_cloudwatch_log_group.step_functions.name
 }
 
+output "normalizer_lambda_arn" {
+  value = aws_lambda_function.normalizer.arn
+}
+
+output "normalizer_lambda_name" {
+  value = aws_lambda_function.normalizer.function_name
+}
+
+output "normalizer_lambda_role_arn" {
+  value = aws_iam_role.normalizer_lambda_role.arn
+}
+
+output "normalizer_log_group_name" {
+  value = aws_cloudwatch_log_group.normalizer_lambda.name
+}
+
 output "pii_calculator_lambda_arn" {
   value = aws_lambda_function.pii_calculator.arn
 }

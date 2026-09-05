@@ -81,6 +81,8 @@ resource "aws_iam_policy" "step_functions_policy" {
           "lambda:InvokeFunction"
         ]
         Resource = [
+          aws_lambda_function.normalizer.arn,
+          "${aws_lambda_function.normalizer.arn}:*",
           aws_lambda_function.pii_calculator.arn,
           "${aws_lambda_function.pii_calculator.arn}:*"
         ]
@@ -124,15 +126,41 @@ resource "aws_sfn_state_machine" "data_pipeline" {
   role_arn = aws_iam_role.step_functions_role.arn
 
   definition = jsonencode({
-    Comment = "Data Pipeline State Machine orchestrating Batch Classifier and PIICalculation Lambda"
-    StartAt = "Classify"
+    Comment = "Data Pipeline State Machine orchestrating Normalizer Lambda, Batch Classifier, and PIICalculation Lambda"
+    StartAt = "Normalize"
     States = {
+      Normalize = {
+        Type     = "Task"
+        Resource = "arn:aws:states:::lambda:invoke"
+        Parameters = {
+          FunctionName = aws_lambda_function.normalizer.arn
+          Payload = {
+            "input-s3-uri.$"  = "$.uploads"
+            "output-s3-uri.$" = "$.uploads"
+          }
+        }
+        ResultPath = "$.normalizerResult"
+        Retry = [
+          {
+            ErrorEquals = [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException",
+              "Lambda.TooManyRequestsException"
+            ]
+            IntervalSeconds = 2
+            MaxAttempts     = 3
+            BackoffRate     = 2.0
+          }
+        ]
+        Next = "Classify"
+      }
       Classify = {
         Type     = "Task"
         Resource = "arn:aws:states:::batch:submitJob.sync"
         Parameters = {
           # tickets can only have digits, letters, dashes, underbars for it to be a jobname.
-          "JobName.$" = "States.Format('classify-{}', $.ticket)"
+          "JobName.$"   = "States.Format('classify-{}', $.ticket)"
           JobQueue      = aws_batch_job_queue.batch_queue.arn
           JobDefinition = aws_batch_job_definition.batch_job.arn
           Parameters = {
