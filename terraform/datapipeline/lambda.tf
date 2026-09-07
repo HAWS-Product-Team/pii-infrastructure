@@ -105,6 +105,113 @@ resource "aws_lambda_function" "normalizer" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "merge_lambda" {
+  name              = "/aws/lambda/${var.app_name}-merge-${var.environment}"
+  retention_in_days = var.lambda_log_retention_days
+
+  tags = {
+    Name        = "/aws/lambda/${var.app_name}-merge-${var.environment}"
+    Environment = var.environment
+    ManagedBy   = "terraform"
+  }
+}
+
+resource "aws_iam_role" "merge_lambda_role" {
+  name = "${var.app_name}-merge-lambda-role-${var.environment}"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = {
+    Name        = "${var.app_name}-merge-lambda-role-${var.environment}"
+    Environment = var.environment
+    ManagedBy   = "terraform"
+  }
+}
+
+resource "aws_iam_policy" "merge_lambda_policy" {
+  name        = "${var.app_name}-merge-lambda-policy-${var.environment}"
+  description = "IAM policy for Merge Lambda to access S3 and CloudWatch Logs"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = [
+          aws_cloudwatch_log_group.merge_lambda.arn,
+          "${aws_cloudwatch_log_group.merge_lambda.arn}:*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject"
+        ]
+        Resource = [
+          "${aws_s3_bucket.input.arn}/*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:ListBucket"
+        ]
+        Resource = [
+          aws_s3_bucket.input.arn
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "merge_lambda_policy_attach" {
+  role       = aws_iam_role.merge_lambda_role.name
+  policy_arn = aws_iam_policy.merge_lambda_policy.arn
+}
+
+resource "aws_lambda_function" "merge" {
+  function_name = "${var.app_name}-merge-${var.environment}"
+  description   = "Merge Lambda stage for data pipeline"
+
+  s3_bucket = aws_s3_bucket.input.id
+  s3_key    = var.merge_lambda_s3_key
+
+  handler     = var.merge_lambda_handler
+  runtime     = var.merge_lambda_runtime
+  memory_size = var.merge_lambda_memory_size
+  timeout     = var.merge_lambda_timeout_seconds
+  role        = aws_iam_role.merge_lambda_role.arn
+
+  depends_on = [
+    aws_cloudwatch_log_group.merge_lambda,
+    aws_iam_role_policy_attachment.merge_lambda_policy_attach
+  ]
+
+  architectures = ["arm64"]
+
+  tags = {
+    Name        = "${var.app_name}-merge-${var.environment}"
+    Environment = var.environment
+    ManagedBy   = "terraform"
+  }
+}
+
 resource "aws_cloudwatch_log_group" "pii_calculator_lambda" {
   name              = "/aws/lambda/${var.app_name}-pii-calculator-${var.environment}"
   retention_in_days = var.lambda_log_retention_days

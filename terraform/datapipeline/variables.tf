@@ -153,6 +153,36 @@ variable "normalizer_lambda_timeout_seconds" {
   default     = 180
 }
 
+variable "merge_lambda_s3_key" {
+  description = "S3 key for the Merge Lambda deployment package in the input bucket"
+  type        = string
+  default     = "lambdas/merge.zip"
+}
+
+variable "merge_lambda_runtime" {
+  description = "Runtime for the Merge Lambda function"
+  type        = string
+  default     = "python3.12"
+}
+
+variable "merge_lambda_handler" {
+  description = "Handler for the Merge Lambda function"
+  type        = string
+  default     = "merge.lambda_handler.handler"
+}
+
+variable "merge_lambda_memory_size" {
+  description = "Memory size (MB) for the Merge Lambda function"
+  type        = number
+  default     = 512
+}
+
+variable "merge_lambda_timeout_seconds" {
+  description = "Timeout (seconds) for the Merge Lambda function"
+  type        = number
+  default     = 60
+}
+
 variable "pii_calculator_lambda_s3_key" {
   description = "S3 key for the PIICalculator Lambda deployment package in the input bucket"
   type        = string

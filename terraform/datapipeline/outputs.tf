@@ -78,6 +78,22 @@ output "normalizer_log_group_name" {
   value = aws_cloudwatch_log_group.normalizer_lambda.name
 }
 
+output "merge_lambda_arn" {
+  value = aws_lambda_function.merge.arn
+}
+
+output "merge_lambda_name" {
+  value = aws_lambda_function.merge.function_name
+}
+
+output "merge_lambda_role_arn" {
+  value = aws_iam_role.merge_lambda_role.arn
+}
+
+output "merge_log_group_name" {
+  value = aws_cloudwatch_log_group.merge_lambda.name
+}
+
 output "pii_calculator_lambda_arn" {
   value = aws_lambda_function.pii_calculator.arn
 }
