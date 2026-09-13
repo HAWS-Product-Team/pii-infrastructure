@@ -34,7 +34,7 @@ Create Terraform-managed AWS resources for:
 
 ## Implementation Location
 This is a child module invoked from root main.tf.
-- `terraform/datapipeline/` 
+- `../Infrastructure/modules/datapipeline/` 
 
 Agent must keep Story 2 changes isolated and clearly named.
 

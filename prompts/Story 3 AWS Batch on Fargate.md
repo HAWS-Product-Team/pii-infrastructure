@@ -36,7 +36,7 @@ Update/Modify Terraform-managed AWS resources for:
 
 ## Implementation Location
 The changes will be applied to the existing child module:
-- `terraform/datapipeline/`
+- `../Infrastructure/modules/datapipeline/`
 
 ---
 
@@ -228,7 +228,7 @@ Implementation must account for AWS Batch replacement ordering:
 Use lifecycle/create-before-destroy where needed to avoid job queue referencing a deleted compute environment.
 
 Documentation:
-- Update `terraform/datapipeline/README.md` to describe AWS Batch Fargate/Fargate Spot instead of EC2 Spot.
+- Update `../Infrastructure/modules/datapipeline/README.md` to describe AWS Batch Fargate/Fargate Spot instead of EC2 Spot.
 - Remove EC2 instance troubleshooting and replace it with Fargate-specific troubleshooting.
 
 Outputs:

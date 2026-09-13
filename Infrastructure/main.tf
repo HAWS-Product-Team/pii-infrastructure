@@ -109,7 +109,7 @@ module "api_gateway" {
 }
 
 module "datapipeline" {
-  source = "../terraform/datapipeline"
+  source = "./modules/datapipeline"
 
   environment = var.environment
   app_name    = var.app_name

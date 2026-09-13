@@ -34,6 +34,7 @@ resource "aws_api_gateway_integration_response" "welcome_mock_response" {
 
   response_templates = {
     "application/json" = jsonencode({
+      messages = ["Welcome to My Inflation Index. Here you can......"],
       links = [
         {
           rel  = "upload"
