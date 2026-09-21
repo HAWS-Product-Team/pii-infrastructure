@@ -161,3 +161,49 @@ resource "aws_api_gateway_integration_response" "pii_report_status_mock_response
 
   depends_on = [aws_api_gateway_integration.pii_report_status_mock]
 }
+
+# Endpoint 4: pii-report (/pii-report)
+resource "aws_api_gateway_integration" "pii_report_mock" {
+  rest_api_id = aws_api_gateway_rest_api.pii_api.id
+  resource_id = aws_api_gateway_resource.pii_report.id
+  http_method = "GET"
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+  depends_on = [aws_api_gateway_method.pii_report_get]
+}
+
+resource "aws_api_gateway_method_response" "pii_report_200" {
+  rest_api_id = aws_api_gateway_rest_api.pii_api.id
+  resource_id = aws_api_gateway_resource.pii_report.id
+  http_method = "GET"
+  status_code = "200"
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+  depends_on = [aws_api_gateway_method.pii_report_get]
+}
+
+resource "aws_api_gateway_integration_response" "pii_report_mock_response" {
+  rest_api_id = aws_api_gateway_rest_api.pii_api.id
+  resource_id = aws_api_gateway_resource.pii_report.id
+  http_method = "GET"
+  status_code = aws_api_gateway_method_response.pii_report_200.status_code
+
+  response_templates = {
+    "application/json" = jsonencode({
+      message = "Your personal inflation is 14."
+      links = [
+        {
+          rel  = "self"
+          href = "/pii-report"
+        }
+      ]
+    })
+  }
+
+  depends_on = [aws_api_gateway_integration.pii_report_mock]
+}

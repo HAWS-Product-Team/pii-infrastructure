@@ -2,29 +2,6 @@ resource "aws_api_gateway_rest_api" "pii_api" {
   name = "${var.app_name}-${var.environment}-api"
 }
 
-# Luke, I commented out the below because it was causing my plan to fail. For some reason it expects
-# an integration to be defined for the resource.  I'm not sure why I need one for this resource.
-# I'll need to look at your old plan to figure out how it worked in the past without an integration defined, or it had
-# one and I lost it when moving your work into this plan.
-# Claude: Alternatively, if /submit is meant to eventually forward to SQS (which your IAM role apigw_sqs_role suggests),
-# you'd replace the mock with an AWS type integration pointing at the SQS queue — but the mock unblocks you now and
-# you can swap it out later.
-
-# Luke's API, defines the path
-# resource "aws_api_gateway_resource" "submit" {
-#   rest_api_id = aws_api_gateway_rest_api.pii_api.id
-#   parent_id   = aws_api_gateway_rest_api.pii_api.root_resource_id
-#   path_part   = "submit"
-# }
-#
-# # Luke's API, defines the method
-# resource "aws_api_gateway_method" "submit_post" {
-#   rest_api_id   = aws_api_gateway_rest_api.pii_api.id
-#   resource_id   = aws_api_gateway_resource.submit.id
-#   http_method   = "POST"
-#   authorization = "NONE"
-# }
-
 resource "aws_iam_role" "apigw_sqs_role" {
   name = "${var.app_name}-${var.environment}-apigw-sqs-role"
 
@@ -91,6 +68,13 @@ resource "aws_api_gateway_resource" "pii_report_status" {
   path_part   = "pii-report-status"
 }
 
+# Endpoint 4: pii-report (/pii-report)
+resource "aws_api_gateway_resource" "pii_report" {
+  rest_api_id = aws_api_gateway_rest_api.pii_api.id
+  parent_id   = aws_api_gateway_rest_api.pii_api.root_resource_id
+  path_part   = "pii-report"
+}
+
 # Lambda Authorizer Mock
 resource "aws_iam_role" "authorizer_role" {
   name = "${var.app_name}-${var.environment}-authorizer-role"
@@ -118,12 +102,13 @@ resource "aws_lambda_function" "authorizer" {
 }
 
 resource "aws_api_gateway_authorizer" "bearer_auth" {
-  name                   = "BearerAuth"
-  rest_api_id            = aws_api_gateway_rest_api.pii_api.id
-  authorizer_uri         = aws_lambda_function.authorizer.invoke_arn
-  authorizer_credentials = aws_iam_role.invocation_role.arn
-  type                   = "TOKEN"
-  identity_source        = "method.request.header.Authorization"
+  name                             = "BearerAuth"
+  rest_api_id                      = aws_api_gateway_rest_api.pii_api.id
+  authorizer_uri                   = aws_lambda_function.authorizer.invoke_arn
+  authorizer_credentials           = aws_iam_role.invocation_role.arn
+  type                             = "TOKEN"
+  identity_source                  = "method.request.header.Authorization"
+  authorizer_result_ttl_in_seconds = 0
 }
 
 resource "aws_iam_role" "invocation_role" {
@@ -163,6 +148,14 @@ resource "aws_api_gateway_method" "pii_report_status_get" {
   authorizer_id = aws_api_gateway_authorizer.bearer_auth.id
 }
 
+resource "aws_api_gateway_method" "pii_report_get" {
+  rest_api_id   = aws_api_gateway_rest_api.pii_api.id
+  resource_id   = aws_api_gateway_resource.pii_report.id
+  http_method   = "GET"
+  authorization = "CUSTOM"
+  authorizer_id = aws_api_gateway_authorizer.bearer_auth.id
+}
+
 # Deployment & Stage
 resource "aws_api_gateway_deployment" "pii_api_deployment" {
   rest_api_id = aws_api_gateway_rest_api.pii_api.id
@@ -174,9 +167,12 @@ resource "aws_api_gateway_deployment" "pii_api_deployment" {
       aws_api_gateway_method.welcome_get,
       aws_api_gateway_method.spending_history_post,
       aws_api_gateway_method.pii_report_status_get,
+      aws_api_gateway_method.pii_report_get,
+      aws_api_gateway_authorizer.bearer_auth,
       aws_api_gateway_integration.welcome_mock,
       aws_api_gateway_integration.spending_history_mock,
-      aws_api_gateway_integration.pii_report_status_mock
+      aws_api_gateway_integration.pii_report_status_mock,
+      aws_api_gateway_integration.pii_report_mock
     ]))
   }
 
@@ -184,7 +180,8 @@ resource "aws_api_gateway_deployment" "pii_api_deployment" {
   depends_on = [
     aws_api_gateway_integration.welcome_mock,
     aws_api_gateway_integration.spending_history_mock,
-    aws_api_gateway_integration.pii_report_status_mock
+    aws_api_gateway_integration.pii_report_status_mock,
+    aws_api_gateway_integration.pii_report_mock
   ]
 
   lifecycle {
