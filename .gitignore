@@ -39,3 +39,5 @@ override.tf.json
 terraform.rc
 .DS_Store
 Infrastructure/terraform.tfvars
+Infrastructure/plan.txt
+Infrastructure/tfplan
