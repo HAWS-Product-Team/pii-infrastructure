@@ -22,3 +22,9 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
+variable "submit_lambda_s3_key" {
+  description = "S3 key for the submit Lambda deployment package in the input bucket"
+  type        = string
+  default     = "lambdas/submit.zip"
+}
+

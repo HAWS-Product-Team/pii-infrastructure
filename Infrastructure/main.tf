@@ -103,9 +103,21 @@ resource "aws_route" "public_igw" {
 module "api_gateway" {
   source = "./modules/api-gateway"
 
-  app_name      = var.app_name
-  environment   = var.environment
-  sqs_queue_arn = aws_sqs_queue.pii_queue.arn
+  app_name                    = var.app_name
+  environment                 = var.environment
+  sqs_queue_arn               = aws_sqs_queue.pii_queue.arn
+  submit_lambda_invoke_arn    = module.submit.submit_lambda_invoke_arn
+  submit_lambda_function_name = module.submit.submit_lambda_function_name
+}
+
+module "submit" {
+  source = "./modules/submit"
+
+  app_name             = var.app_name
+  environment          = var.environment
+  uploads_bucket_name  = module.datapipeline.input_bucket_name
+  uploads_bucket_arn   = module.datapipeline.input_bucket_arn
+  submit_lambda_s3_key = var.submit_lambda_s3_key
 }
 
 module "datapipeline" {

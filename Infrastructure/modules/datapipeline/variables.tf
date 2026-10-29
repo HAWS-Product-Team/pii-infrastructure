@@ -224,3 +224,9 @@ variable "step_functions_log_retention_days" {
   type        = number
   default     = 3
 }
+
+variable "cors_allowed_origins" {
+  description = "Allowed origins for S3 bucket CORS configuration"
+  type        = list(string)
+  default     = ["*"]
+}

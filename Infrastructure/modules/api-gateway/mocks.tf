@@ -55,73 +55,7 @@ resource "aws_api_gateway_integration_response" "welcome_mock_response" {
 }
 
 #************* Endpoint 2: Submit Spending History (/spending-history) ******************************
-
-resource "aws_api_gateway_integration" "spending_history_mock" {
-  rest_api_id = aws_api_gateway_rest_api.pii_api.id
-  resource_id = aws_api_gateway_resource.spending_history.id
-  http_method = "POST"
-  type        = "MOCK"
-
-  request_templates = {
-    "application/json" = "{\"statusCode\": 200}"
-  }
-  depends_on = [aws_api_gateway_method.spending_history_post]
-}
-
-# **************  Endpoint 0: Submit (Root/Submit) - MISSING INTEGRATION
-# resource "aws_api_gateway_integration" "submit_mock" {
-#   rest_api_id = aws_api_gateway_rest_api.pii_api.id
-#   resource_id = aws_api_gateway_resource.submit.id
-#   http_method = aws_api_gateway_method.submit_post.http_method
-#   type        = "MOCK"
-#
-#   request_templates = {
-#     "application/json" = "{\"statusCode\": 200}"
-#   }
-#
-#   depends_on = [aws_api_gateway_method.submit_post]
-# }
-# *************
-
-resource "aws_api_gateway_method_response" "spending_history_200" {
-  rest_api_id = aws_api_gateway_rest_api.pii_api.id
-  resource_id = aws_api_gateway_resource.spending_history.id
-  http_method = "POST"
-  status_code = "200"
-
-  response_parameters = {
-    "method.response.header.Authorization" = true
-  }
-
-  response_models = {
-    "application/json" = "Empty"
-  }
-  depends_on = [aws_api_gateway_method.spending_history_post]
-}
-
-resource "aws_api_gateway_integration_response" "spending_history_mock_response" {
-  rest_api_id = aws_api_gateway_rest_api.pii_api.id
-  resource_id = aws_api_gateway_resource.spending_history.id
-  http_method = "POST"
-  status_code = aws_api_gateway_method_response.spending_history_200.status_code
-
-  response_parameters = {
-    "method.response.header.Authorization" = "'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoyMDE2MjMyMTIzfQ.example_signature'"
-  }
-
-  response_templates = {
-    "application/json" = jsonencode({
-      links = [
-        {
-          rel  = "pii-report-status"
-          href = "/pii-report-status"
-        }
-      ]
-    })
-  }
-
-  depends_on = [aws_api_gateway_integration.spending_history_mock]
-}
+# Mock decommissioned for Story 10; POST /spending-history is now an AWS_PROXY integration to submit Lambda in main.tf
 
 # Endpoint 3: Processing Screen (/pii-report-status)
 resource "aws_api_gateway_integration" "pii_report_status_mock" {

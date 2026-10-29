@@ -35,6 +35,18 @@ resource "aws_s3_bucket_ownership_controls" "input" {
   }
 }
 
+resource "aws_s3_bucket_cors_configuration" "input_uploads" {
+  bucket = aws_s3_bucket.input.id
+
+  cors_rule {
+    allowed_headers = ["*"]
+    allowed_methods = ["PUT"]
+    allowed_origins = var.cors_allowed_origins
+    expose_headers  = ["ETag"]
+    max_age_seconds = 3600
+  }
+}
+
 resource "aws_s3_bucket_lifecycle_configuration" "input" {
   bucket = aws_s3_bucket.input.id
 

@@ -61,6 +61,23 @@ resource "aws_api_gateway_method" "spending_history_post" {
   authorization = "NONE"
 }
 
+resource "aws_api_gateway_integration" "spending_history" {
+  rest_api_id             = aws_api_gateway_rest_api.pii_api.id
+  resource_id             = aws_api_gateway_resource.spending_history.id
+  http_method             = aws_api_gateway_method.spending_history_post.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = var.submit_lambda_invoke_arn
+}
+
+resource "aws_lambda_permission" "apigw_submit" {
+  statement_id  = "AllowAPIGatewayInvokeSubmit"
+  action        = "lambda:InvokeFunction"
+  function_name = var.submit_lambda_function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.pii_api.execution_arn}/*/${aws_api_gateway_method.spending_history_post.http_method}${aws_api_gateway_resource.spending_history.path}"
+}
+
 # Endpoint 3: Processing Screen (/pii-report-status)
 resource "aws_api_gateway_resource" "pii_report_status" {
   rest_api_id = aws_api_gateway_rest_api.pii_api.id
@@ -170,7 +187,8 @@ resource "aws_api_gateway_deployment" "pii_api_deployment" {
       aws_api_gateway_method.pii_report_get,
       aws_api_gateway_authorizer.bearer_auth,
       aws_api_gateway_integration.welcome_mock,
-      aws_api_gateway_integration.spending_history_mock,
+      aws_api_gateway_integration.spending_history,
+      aws_lambda_permission.apigw_submit,
       aws_api_gateway_integration.pii_report_status_mock,
       aws_api_gateway_integration.pii_report_mock
     ]))
@@ -179,7 +197,7 @@ resource "aws_api_gateway_deployment" "pii_api_deployment" {
   # Wait for the integrations to be created
   depends_on = [
     aws_api_gateway_integration.welcome_mock,
-    aws_api_gateway_integration.spending_history_mock,
+    aws_api_gateway_integration.spending_history,
     aws_api_gateway_integration.pii_report_status_mock,
     aws_api_gateway_integration.pii_report_mock
   ]
