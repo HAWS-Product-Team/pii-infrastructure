@@ -187,19 +187,25 @@ resource "aws_api_gateway_deployment" "pii_api_deployment" {
       aws_api_gateway_method.pii_report_get,
       aws_api_gateway_authorizer.bearer_auth,
       aws_api_gateway_integration.welcome_mock,
+      aws_api_gateway_integration_response.welcome_mock_response,
       aws_api_gateway_integration.spending_history,
       aws_lambda_permission.apigw_submit,
       aws_api_gateway_integration.pii_report_status_mock,
-      aws_api_gateway_integration.pii_report_mock
+      aws_api_gateway_integration_response.pii_report_status_mock_response,
+      aws_api_gateway_integration.pii_report_mock,
+      aws_api_gateway_integration_response.pii_report_mock_response
     ]))
   }
 
   # Wait for the integrations to be created
   depends_on = [
     aws_api_gateway_integration.welcome_mock,
+    aws_api_gateway_integration_response.welcome_mock_response,
     aws_api_gateway_integration.spending_history,
     aws_api_gateway_integration.pii_report_status_mock,
-    aws_api_gateway_integration.pii_report_mock
+    aws_api_gateway_integration_response.pii_report_status_mock_response,
+    aws_api_gateway_integration.pii_report_mock,
+    aws_api_gateway_integration_response.pii_report_mock_response
   ]
 
   lifecycle {
